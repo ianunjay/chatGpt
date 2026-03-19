@@ -1,0 +1,316 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:var(--font-sans);}
+.app{max-width:600px;margin:0 auto;padding:1.5rem 1rem;}
+.screen{display:none;}
+.screen.active{display:block;}
+.label{font-size:11px;font-weight:500;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:6px;}
+input[type=text]{width:100%;font-size:15px;}
+textarea{width:100%;min-height:100px;resize:vertical;font-size:15px;line-height:1.6;padding:12px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);font-family:var(--font-sans);}
+textarea:focus{outline:none;border-color:var(--color-border-primary);}
+button{padding:9px 18px;font-size:14px;border-radius:var(--border-radius-md);cursor:pointer;border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);font-family:var(--font-sans);transition:background 0.15s;}
+button:hover{background:var(--color-background-secondary);}
+button:active{transform:scale(0.98);}
+button.primary{background:var(--color-text-primary);color:var(--color-background-primary);border-color:transparent;}
+button.primary:hover{opacity:0.85;}
+button.primary:disabled{opacity:0.4;cursor:not-allowed;}
+.card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:1rem 1.25rem;margin-bottom:1rem;}
+.row{display:flex;gap:8px;margin-top:10px;align-items:center;}
+.muted{font-size:13px;color:var(--color-text-secondary);}
+.pill{display:inline-block;font-size:11px;font-weight:500;padding:3px 10px;border-radius:99px;}
+.pill-a{background:#E1F5EE;color:#085041;}
+.pill-b{background:#EEEDFE;color:#3C3489;}
+.pill-waiting{background:#F1EFE8;color:#444441;}
+.section-title{font-size:16px;font-weight:500;color:var(--color-text-primary);margin-bottom:4px;}
+.divider{border:none;border-top:0.5px solid var(--color-border-tertiary);margin:1.25rem 0;}
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid var(--color-border-secondary);border-top-color:var(--color-text-primary);border-radius:50%;animation:spin 0.7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.chat-bubble{padding:10px 14px;border-radius:var(--border-radius-lg);font-size:14px;line-height:1.6;margin-bottom:10px;max-width:88%;}
+.bubble-a{background:#E1F5EE;color:#085041;align-self:flex-start;}
+.bubble-b{background:#EEEDFE;color:#3C3489;align-self:flex-end;margin-left:auto;}
+.bubble-mediator{background:var(--color-background-secondary);color:var(--color-text-primary);border:0.5px solid var(--color-border-tertiary);}
+.bubble-sender{font-size:11px;font-weight:500;margin-bottom:4px;opacity:0.7;}
+.chat-log{display:flex;flex-direction:column;gap:2px;margin-bottom:1rem;}
+.next-steps-card{background:var(--color-background-secondary);border-radius:var(--border-radius-lg);padding:1.25rem;margin-top:1rem;}
+.step-item{display:flex;gap:10px;margin-bottom:10px;font-size:14px;line-height:1.6;color:var(--color-text-primary);}
+.step-num{min-width:22px;height:22px;border-radius:50%;background:var(--color-text-primary);color:var(--color-background-primary);font-size:11px;font-weight:500;display:flex;align-items:center;justify-content:center;margin-top:2px;}
+.who-badge{display:flex;gap:8px;align-items:center;margin-bottom:1.25rem;}
+.avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:500;}
+.avatar-a{background:#E1F5EE;color:#085041;}
+.avatar-b{background:#EEEDFE;color:#3C3489;}
+</style>
+
+<div class="app">
+
+  <!-- SCREEN 1: CREATE SESSION -->
+  <div class="screen active" id="screen-create">
+    <p class="section-title" style="margin-bottom:4px;">Start a mediation session</p>
+    <p class="muted" style="margin-bottom:1.5rem;">Two people join separately. The AI listens to both and helps you understand each other.</p>
+    <div class="label">your name</div>
+    <input type="text" id="creator-name" placeholder="e.g. Alex" style="margin-bottom:1rem;" />
+    <div class="label">session topic (optional)</div>
+    <input type="text" id="session-topic" placeholder="e.g. argument about chores, work disagreement..." style="margin-bottom:1.25rem;" />
+    <div class="row" style="margin-top:0;">
+      <button class="primary" onclick="createSession()">Create session</button>
+    </div>
+  </div>
+
+  <!-- SCREEN 2: WAITING FOR PERSON B -->
+  <div class="screen" id="screen-waiting">
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+        <div class="avatar avatar-a" id="creator-avatar-w">A</div>
+        <div>
+          <p style="font-weight:500;font-size:15px;" id="creator-name-w">Alex</p>
+          <p class="muted">session creator</p>
+        </div>
+        <span class="pill pill-a" style="margin-left:auto;">joined</span>
+      </div>
+      <hr class="divider" style="margin:0.75rem 0;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div class="avatar" style="background:var(--color-background-secondary);border:0.5px dashed var(--color-border-secondary);color:var(--color-text-tertiary);">?</div>
+        <div>
+          <p style="font-size:14px;color:var(--color-text-secondary);">Waiting for the other person...</p>
+        </div>
+        <span class="pill pill-waiting" style="margin-left:auto;">waiting</span>
+      </div>
+    </div>
+    <div class="card" style="margin-top:0.5rem;">
+      <p class="label">share this session code</p>
+      <p style="font-size:22px;font-weight:500;letter-spacing:0.12em;margin:6px 0;" id="session-code-display">---</p>
+      <p class="muted">Ask them to open this app and enter the code above.</p>
+    </div>
+    <hr class="divider">
+    <p class="label">or — simulate the other person joining (for demo)</p>
+    <div style="display:flex;gap:8px;margin-top:4px;">
+      <input type="text" id="joiner-name-sim" placeholder="Their name e.g. Jordan" style="flex:1;" />
+      <button onclick="joinSession()">Join as them</button>
+    </div>
+  </div>
+
+  <!-- SCREEN 3: BOTH JOINED — PERSON A SPEAKS -->
+  <div class="screen" id="screen-a-speaks">
+    <div class="who-badge">
+      <div class="avatar avatar-a" id="av-a"></div>
+      <div>
+        <p style="font-size:14px;font-weight:500;" id="name-a-speaks"></p>
+        <p class="muted" style="font-size:12px;">your turn to share</p>
+      </div>
+    </div>
+    <p style="font-size:14px;color:var(--color-text-secondary);margin-bottom:12px;">Tell the AI how you're feeling and what's bothering you. Be honest. The other person won't see this directly.</p>
+    <textarea id="a-message" placeholder="What's going on for you? Say it however feels natural..."></textarea>
+    <div class="row">
+      <button class="primary" id="a-submit-btn" onclick="submitA()">Share with mediator</button>
+    </div>
+  </div>
+
+  <!-- SCREEN 4: PERSON B SPEAKS -->
+  <div class="screen" id="screen-b-speaks">
+    <div class="who-badge">
+      <div class="avatar avatar-b" id="av-b"></div>
+      <div>
+        <p style="font-size:14px;font-weight:500;" id="name-b-speaks"></p>
+        <p class="muted" style="font-size:12px;">your turn to share</p>
+      </div>
+    </div>
+    <p style="font-size:14px;color:var(--color-text-secondary);margin-bottom:12px;">Tell the AI how you're feeling and what's bothering you. Be honest. The other person won't see this directly.</p>
+    <textarea id="b-message" placeholder="What's going on for you? Say it however feels natural..."></textarea>
+    <div class="row">
+      <button class="primary" id="b-submit-btn" onclick="submitB()">Share with mediator</button>
+    </div>
+  </div>
+
+  <!-- SCREEN 5: MEDIATOR PROCESSING -->
+  <div class="screen" id="screen-processing">
+    <div style="text-align:center;padding:2rem 0;">
+      <div class="spinner" style="width:24px;height:24px;margin:0 auto 16px;"></div>
+      <p style="font-size:15px;font-weight:500;margin-bottom:6px;">Mediating...</p>
+      <p class="muted">Understanding both perspectives and finding common ground.</p>
+    </div>
+  </div>
+
+  <!-- SCREEN 6: MEDIATED CONVERSATION VIEW -->
+  <div class="screen" id="screen-result">
+    <p class="section-title" style="margin-bottom:4px;">What the mediator heard</p>
+    <p class="muted" style="margin-bottom:1.25rem;">Both perspectives, translated without blame.</p>
+
+    <div class="chat-log" id="chat-log"></div>
+
+    <hr class="divider">
+
+    <p style="font-size:15px;font-weight:500;margin-bottom:10px;">Suggested next steps</p>
+    <div id="next-steps-container"></div>
+
+    <hr class="divider">
+    <div class="row" style="margin-top:0;">
+      <button onclick="addRound()">Continue the conversation</button>
+      <button class="primary" onclick="resetAll()">Start new session</button>
+    </div>
+  </div>
+
+  <!-- SCREEN 7: CONTINUE ROUND -->
+  <div class="screen" id="screen-continue">
+    <p class="section-title" style="margin-bottom:6px;">Round <span id="round-num">2</span></p>
+    <p class="muted" style="margin-bottom:1.25rem;">Each person shares their response after reading the mediator's summary.</p>
+    <div class="who-badge">
+      <div class="avatar avatar-a" id="av-a2"></div>
+      <div><p style="font-size:14px;font-weight:500;" id="name-a-cont"></p></div>
+    </div>
+    <textarea id="a-cont-msg" placeholder="How do you feel after reading the summary?"></textarea>
+    <div class="row"><button onclick="nextContB()">Done</button></div>
+    <hr class="divider">
+    <div class="who-badge">
+      <div class="avatar avatar-b" id="av-b2"></div>
+      <div><p style="font-size:14px;font-weight:500;" id="name-b-cont"></p></div>
+    </div>
+    <textarea id="b-cont-msg" placeholder="How do you feel after reading the summary?"></textarea>
+    <div class="row"><button class="primary" id="cont-submit-btn" onclick="submitContinue()">Mediate again</button></div>
+  </div>
+
+</div>
+
+<script>
+const state = {
+  nameA:'', nameB:'', topic:'', sessionCode:'',
+  msgA:'', msgB:'', history:[], round:1
+};
+
+function initials(n){return n.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);}
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');}
+function spinner(btn,on){btn.disabled=on;btn.innerHTML=on?'<span class="spinner"></span>':btn._label;}
+
+function createSession(){
+  const n=document.getElementById('creator-name').value.trim();
+  if(!n)return;
+  state.nameA=n;
+  state.topic=document.getElementById('session-topic').value.trim();
+  state.sessionCode=Math.random().toString(36).slice(2,7).toUpperCase();
+  document.getElementById('creator-name-w').textContent=n;
+  document.getElementById('creator-avatar-w').textContent=initials(n);
+  document.getElementById('session-code-display').textContent=state.sessionCode;
+  show('screen-waiting');
+}
+
+function joinSession(){
+  const n=document.getElementById('joiner-name-sim').value.trim();
+  if(!n)return;
+  state.nameB=n;
+  setupSpeakScreens();
+  show('screen-a-speaks');
+}
+
+function setupSpeakScreens(){
+  document.getElementById('av-a').textContent=initials(state.nameA);
+  document.getElementById('name-a-speaks').textContent=state.nameA;
+  document.getElementById('av-b').textContent=initials(state.nameB);
+  document.getElementById('name-b-speaks').textContent=state.nameB;
+  const ab=document.getElementById('a-submit-btn');ab._label='Share with mediator';
+  const bb=document.getElementById('b-submit-btn');bb._label='Share with mediator';
+}
+
+function submitA(){
+  const msg=document.getElementById('a-message').value.trim();
+  if(!msg)return;
+  state.msgA=msg;
+  show('screen-b-speaks');
+}
+
+async function submitB(){
+  const msg=document.getElementById('b-message').value.trim();
+  if(!msg)return;
+  state.msgB=msg;
+  show('screen-processing');
+  await mediate(state.msgA, state.msgB, false);
+}
+
+async function mediate(msgA, msgB, isContinue){
+  const topicLine=state.topic?`The conflict is about: "${state.topic}".`:'';
+  const histLine=state.history.length?`Previous rounds context:\n${state.history.map(h=>`Round ${h.round}: ${state.nameA} said: "${h.a}" | ${state.nameB} said: "${h.b}"`).join('\n')}`:'';
+
+  const prompt=`You are a compassionate conflict mediator. Two people have shared their feelings with you privately.
+${topicLine}
+${histLine}
+
+${state.nameA}'s raw message: "${msgA}"
+${state.nameB}'s raw message: "${msgB}"
+
+Return ONLY valid JSON in this exact format, nothing else:
+{
+  "summaryA": "A calm, non-blaming 2-3 sentence summary of what ${state.nameA} is feeling and needing. Start with their name. Preserve meaning, remove aggression.",
+  "summaryB": "A calm, non-blaming 2-3 sentence summary of what ${state.nameB} is feeling and needing. Start with their name. Preserve meaning, remove aggression.",
+  "common": "1-2 sentences on what both people seem to want at the core — the shared need or desire underneath the conflict.",
+  "nextSteps": ["Step 1 as a concrete actionable suggestion", "Step 2", "Step 3"]
+}`;
+
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:1000,
+        messages:[{role:'user',content:prompt}]
+      })
+    });
+    const data=await res.json();
+    const raw=data.content?.[0]?.text||'{}';
+    const clean=raw.replace(/```json|```/g,'').trim();
+    const parsed=JSON.parse(clean);
+    if(isContinue) state.round++;
+    state.history.push({round:state.round, a:msgA, b:msgB});
+    renderResult(parsed);
+    show('screen-result');
+  }catch(e){
+    show('screen-result');
+    document.getElementById('chat-log').innerHTML='<p style="color:var(--color-text-danger);">Something went wrong. Please try again.</p>';
+  }
+}
+
+function renderResult(d){
+  const log=document.getElementById('chat-log');
+  const ns=document.getElementById('next-steps-container');
+
+  const bubbleA=`<div class="chat-bubble bubble-a"><div class="bubble-sender">${state.nameA}</div>${d.summaryA||''}</div>`;
+  const bubbleB=`<div class="chat-bubble bubble-b"><div class="bubble-sender">${state.nameB}</div>${d.summaryB||''}</div>`;
+  const bubbleMed=`<div class="chat-bubble bubble-mediator"><div class="bubble-sender" style="color:var(--color-text-secondary);">What you both seem to want</div>${d.common||''}</div>`;
+
+  log.innerHTML=bubbleA+bubbleB+bubbleMed;
+
+  const steps=(d.nextSteps||[]).map((s,i)=>`<div class="step-item"><div class="step-num">${i+1}</div><div>${s}</div></div>`).join('');
+  ns.innerHTML=`<div class="next-steps-card">${steps}</div>`;
+}
+
+function addRound(){
+  state.round++;
+  document.getElementById('round-num').textContent=state.round;
+  document.getElementById('av-a2').textContent=initials(state.nameA);
+  document.getElementById('name-a-cont').textContent=state.nameA;
+  document.getElementById('av-b2').textContent=initials(state.nameB);
+  document.getElementById('name-b-cont').textContent=state.nameB;
+  document.getElementById('a-cont-msg').value='';
+  document.getElementById('b-cont-msg').value='';
+  const cb=document.getElementById('cont-submit-btn');cb._label='Mediate again';
+  show('screen-continue');
+}
+
+async function submitContinue(){
+  const a=document.getElementById('a-cont-msg').value.trim();
+  const b=document.getElementById('b-cont-msg').value.trim();
+  if(!a||!b)return;
+  const btn=document.getElementById('cont-submit-btn');
+  spinner(btn,true);
+  show('screen-processing');
+  await mediate(a,b,true);
+}
+
+function resetAll(){
+  state.nameA='';state.nameB='';state.topic='';state.sessionCode='';
+  state.msgA='';state.msgB='';state.history=[];state.round=1;
+  document.getElementById('creator-name').value='';
+  document.getElementById('session-topic').value='';
+  document.getElementById('a-message').value='';
+  document.getElementById('b-message').value='';
+  show('screen-create');
+}
+</script>
